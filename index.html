@@ -216,12 +216,27 @@ async function loadUserProfile() {
   }
 }
 
+// 修正國家 emoji：若為文字縮寫（如 TW/JP）則轉換為旗子 emoji
+function fixCountryEmoji(c) {
+  const emojiMap = {
+    'TW':'🇹🇼','JP':'🇯🇵','KR':'🇰🇷','US':'🇺🇸','GB':'🇬🇧','FR':'🇫🇷',
+    'IT':'🇮🇹','DE':'🇩🇪','TH':'🇹🇭','SG':'🇸🇬','AU':'🇦🇺','CN':'🇨🇳',
+    'HK':'🇭🇰','MO':'🇲🇴','VN':'🇻🇳','MY':'🇲🇾','ID':'🇮🇩','PH':'🇵🇭',
+    'IN':'🇮🇳','ES':'🇪🇸','PT':'🇵🇹','NL':'🇳🇱','CH':'🇨🇭','CA':'🇨🇦',
+    'MX':'🇲🇽','BR':'🇧🇷','AR':'🇦🇷','NZ':'🇳🇿',
+  };
+  if(c.emoji && emojiMap[c.emoji.toUpperCase()]) {
+    c.emoji = emojiMap[c.emoji.toUpperCase()];
+  }
+  return c;
+}
+
 async function loadUserData() {
   const uid = viewingUid || currentUser.uid;
   const d = await getDoc(doc(db,'userData',uid));
   if(d.exists()) {
     const data = d.data();
-    countries = data.countries || DEFAULT_COUNTRIES;
+    countries = (data.countries || DEFAULT_COUNTRIES).map(fixCountryEmoji);
     shopCats = data.shopCats || DEFAULT_SHOPCATS;
     if(data.cats && data.cats.length) CATS = data.cats;
   } else {
@@ -264,7 +279,7 @@ function setupOwnListeners() {
   ownListeners.push(onSnapshot(doc(db,'userData',uid), snap=>{
     if(viewingUid || !snap.exists()) return;
     const data = snap.data();
-    countries = data.countries || DEFAULT_COUNTRIES;
+    countries = (data.countries || DEFAULT_COUNTRIES).map(fixCountryEmoji);
     shopCats = data.shopCats || DEFAULT_SHOPCATS;
     if(data.cats && data.cats.length) CATS = data.cats;
   }));
@@ -467,7 +482,13 @@ window.goNav = function(page) {
       // Going back to own data - clear friend listeners and reload own data
       clearFriendListeners();
       viewingUid = null;
+      // 立即重置為自己的資料，避免短暫顯示朋友的資料
+      countries = DEFAULT_COUNTRIES;
+      items = [];
+      shopItems = [];
+      CATS = [{id:'eat',label:'好吃',emoji:'🍜',cls:'tag-eat'},{id:'play',label:'好玩',emoji:'🏞',cls:'tag-play'},{id:'buy',label:'好買',emoji:'🏪',cls:'tag-buy'},{id:'go',label:'想去',emoji:'📍',cls:'tag-go'}];
       nav={page:'countries',country:null,region:null,cat:null,filter:'all',shopCat:null,prevPage:null,itemId:null};
+      document.getElementById('pageContent').innerHTML = '<div class="loading">載入中...</div>';
       loadUserData().then(()=>render());
       return;
     }
@@ -764,7 +785,7 @@ window.viewFriend = async function(uid) {
   const dataUnsub = onSnapshot(doc(db,'userData',uid), (snap) => {
     if(snap.exists()) {
       const data = snap.data();
-      countries = data.countries || DEFAULT_COUNTRIES;
+      countries = (data.countries || DEFAULT_COUNTRIES).map(fixCountryEmoji);
       shopCats = data.shopCats || DEFAULT_SHOPCATS;
       if(data.cats && data.cats.length) CATS = data.cats;
     }
