@@ -240,6 +240,43 @@ async function loadUserData() {
   }
 }
 
+// Setup realtime listeners for own data
+let ownListeners = [];
+function setupOwnListeners() {
+  ownListeners.forEach(u=>u()); ownListeners=[];
+  const uid = currentUser.uid;
+  
+  // Listen to own items
+  ownListeners.push(onSnapshot(collection(db,'userData',uid,'items'), snap=>{
+    if(viewingUid) return;
+    items = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(nav.page !== 'detail') render();
+  }));
+  
+  // Listen to own shopItems
+  ownListeners.push(onSnapshot(collection(db,'userData',uid,'shopItems'), snap=>{
+    if(viewingUid) return;
+    shopItems = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(nav.page !== 'shopdetail') render();
+  }));
+  
+  // Listen to own userData (countries, cats etc)
+  ownListeners.push(onSnapshot(doc(db,'userData',uid), snap=>{
+    if(viewingUid || !snap.exists()) return;
+    const data = snap.data();
+    countries = data.countries || DEFAULT_COUNTRIES;
+    shopCats = data.shopCats || DEFAULT_SHOPCATS;
+    if(data.cats && data.cats.length) CATS = data.cats;
+  }));
+  
+  // Listen to own profile (for friend code etc)
+  ownListeners.push(onSnapshot(doc(db,'users',uid), snap=>{
+    if(viewingUid || !snap.exists()) return;
+    userProfile = snap.data();
+    friends = userProfile.friends || [];
+  }));
+}
+
 async function saveUserData() {
   if(viewingUid) return;
   await setDoc(doc(db,'userData',currentUser.uid), {countries, shopCats, cats:CATS, updatedAt:Date.now()});
@@ -335,6 +372,7 @@ window.doEmailRegister = async function() {
 function showMainApp() {
   document.getElementById('header').style.display='flex';
   document.getElementById('bottomNav').style.display='flex';
+  setupOwnListeners();
   render();
 }
 
@@ -354,7 +392,7 @@ function renderHeader() {
 
   const pages = {
     'countries': ['我的收藏', null, isReadOnly()?null:'編輯', ()=>openEditCountries()],
-    'regions': ['', ()=>{nav.page='countries';viewingUid=null;render();}, isReadOnly()?null:'編輯', ()=>openEditRegions()],
+    'regions': ['', ()=>{ if(viewingUid){clearFriendListeners();viewingUid=null;loadUserData().then(()=>render());} else {nav.page='countries';render();} }, isReadOnly()?null:'編輯', ()=>openEditRegions()],
     'cats': ['', ()=>{nav.page='regions';render();}, isReadOnly()?null:'編輯', ()=>openEditCats()],
     'list': ['', ()=>{nav.page='cats';render();}, isReadOnly()?null:'＋', ()=>openAddItem()],
     'alllist': ['全部收藏', ()=>{nav.page='regions';render();}, isReadOnly()?null:'＋', ()=>openAddItem()],
@@ -425,8 +463,14 @@ function renderBottomNav() {
 
 window.goNav = function(page) {
   if(['countries','regions','cats','list','alllist','detail'].includes(page)) {
-    if(viewingUid && !['countries'].includes(page)) {}
-    else { viewingUid=null; nav={page:'countries',country:null,region:null,cat:null,filter:'all',shopCat:null,prevPage:null,itemId:null}; }
+    if(viewingUid) {
+      // Going back to own data - clear friend listeners and reload own data
+      clearFriendListeners();
+      viewingUid = null;
+      nav={page:'countries',country:null,region:null,cat:null,filter:'all',shopCat:null,prevPage:null,itemId:null};
+      loadUserData().then(()=>render());
+      return;
+    }
   }
   nav.page=page;
   render();
@@ -693,10 +737,55 @@ window.doAddFriend = async function() {
   } catch(e) { alert('新增失敗：'+e.message); }
 };
 
+let friendListeners = []; // store unsubscribe functions
+
+function clearFriendListeners() {
+  friendListeners.forEach(unsub => unsub());
+  friendListeners = [];
+}
+
 window.viewFriend = async function(uid) {
   viewingUid = uid;
+  clearFriendListeners();
   document.getElementById('pageContent').innerHTML = '<div class="loading">載入中...</div>';
-  await loadUserData();
+  
+  // Load friend profile (realtime)
+  const profileUnsub = onSnapshot(doc(db,'users',uid), (snap) => {
+    if(snap.exists()) {
+      const data = snap.data();
+      // Update friend name in our list
+      const fi = friends.findIndex(f=>f.uid===uid);
+      if(fi>-1) { friends[fi].name=data.name; friends[fi].photo=data.photo||''; }
+    }
+  });
+  friendListeners.push(profileUnsub);
+
+  // Load friend userData (realtime)
+  const dataUnsub = onSnapshot(doc(db,'userData',uid), (snap) => {
+    if(snap.exists()) {
+      const data = snap.data();
+      countries = data.countries || DEFAULT_COUNTRIES;
+      shopCats = data.shopCats || DEFAULT_SHOPCATS;
+      if(data.cats && data.cats.length) CATS = data.cats;
+    }
+    if(nav.page !== 'detail' && nav.page !== 'shopdetail') render();
+  });
+  friendListeners.push(dataUnsub);
+
+  // Load friend items (realtime)
+  const itemsUnsub = onSnapshot(collection(db,'userData',uid,'items'), (snap) => {
+    items = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(nav.page !== 'detail' && nav.page !== 'shopdetail') render();
+  });
+  friendListeners.push(itemsUnsub);
+
+  // Load friend shopItems (realtime)
+  const shopUnsub = onSnapshot(collection(db,'userData',uid,'shopItems'), (snap) => {
+    shopItems = snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(nav.page !== 'detail' && nav.page !== 'shopdetail') render();
+  });
+  friendListeners.push(shopUnsub);
+
   nav.page = 'countries';
   render();
 };
