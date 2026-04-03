@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="我的收藏"/>
+<title>我的收藏</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+:root{
+  --bg:#0a0a0a;--card:#161616;--card2:#1c1c1c;--border:#252525;--border2:#2a2a2a;
+  --text:#fff;--muted:#888;--muted2:#555;
+  --amber:#FF9500;--amber-bg:#1e1200;
+  --green:#30D158;--green-bg:#0a1a0a;
+  --blue:#4DA6FF;--blue-bg:#001525;
+  --red:#FF453A;--red-bg:#1a0808;
+  --purple:#BF5AF2;--purple-bg:#160025;
+  --yellow:#FFD60A;--yellow-bg:#1a1500;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:"Microsoft JhengHei","PingFang TC",sans-serif;overflow:hidden;}
+.app{height:100vh;display:flex;flex-direction:column;max-width:480px;margin:0 auto;position:relative;}
+.header{padding:16px 20px 10px;display:flex;align-items:center;gap:12px;background:var(--bg);border-bottom:0.5px solid var(--border);flex-shrink:0;}
+.header-back{color:var(--amber);font-size:16px;cursor:pointer;padding:4px 8px 4px 0;}
+.header-title{flex:1;font-size:18px;font-weight:700;}
+.header-action{color:var(--amber);font-size:14px;cursor:pointer;}
+.page{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.bottom-nav{background:var(--card);border-top:0.5px solid var(--border);display:flex;flex-shrink:0;}
+.nav-btn{flex:1;padding:10px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
+.nav-ico{font-size:18px;line-height:1;}
+.nav-lbl{font-size:10px;color:var(--muted);}
+.nav-btn.active .nav-lbl{color:var(--amber);}
+.list-item{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:0.5px solid var(--border);cursor:pointer;}
+.list-item:active{background:var(--card);}
+.list-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;overflow:hidden;}
+.list-body{flex:1;min-width:0;}
+.list-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.list-sub{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.list-arrow{color:var(--muted2);font-size:18px;}
+.tag{font-size:10px;padding:2px 8px;border-radius:20px;display:inline-block;white-space:nowrap;}
+.tag-loc{background:var(--blue-bg);color:var(--blue);}
+.tag-eat{background:var(--amber-bg);color:var(--amber);}
+.tag-play{background:var(--green-bg);color:var(--green);}
+.tag-buy{background:var(--purple-bg);color:var(--purple);}
+.tag-go{background:var(--red-bg);color:var(--red);}
+.tag-shop{background:var(--blue-bg);color:var(--blue);}
+.stars{color:var(--amber);font-size:12px;}
+.section-hdr{font-size:11px;color:var(--muted2);padding:10px 20px 4px;text-transform:uppercase;letter-spacing:0.5px;}
+.filter-bar{display:flex;gap:8px;padding:10px 20px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;border-bottom:0.5px solid var(--border);}
+.filter-bar::-webkit-scrollbar{display:none;}
+.filter-pill{font-size:12px;padding:5px 14px;border-radius:20px;white-space:nowrap;cursor:pointer;border:0.5px solid var(--border2);color:var(--muted);background:transparent;flex-shrink:0;}
+.filter-pill.active{background:var(--amber);color:#000;border-color:var(--amber);font-weight:700;}
+.photo-swiper{width:100%;height:220px;position:relative;overflow:hidden;flex-shrink:0;background:var(--card2);}
+.photo-swiper-track{display:flex;height:100%;transition:transform 0.3s ease;}
+.photo-swiper-slide{min-width:100%;height:100%;flex-shrink:0;}
+.photo-swiper-slide img{width:100%;height:100%;object-fit:cover;display:block;}
+.slide-emoji{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;}
+.photo-swiper-overlay{position:absolute;bottom:0;left:0;right:0;height:80px;background:linear-gradient(transparent,var(--bg));pointer-events:none;z-index:1;}
+.photo-dots{position:absolute;bottom:36px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:2;}
+.photo-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.35);}
+.photo-dot.on{background:#fff;}
+.photo-count{position:absolute;top:10px;right:10px;background:rgba(0,0,0,0.55);color:#fff;font-size:11px;padding:3px 8px;border-radius:20px;z-index:2;}
+.photo-add-btn{position:absolute;bottom:8px;right:10px;background:rgba(0,0,0,0.6);color:var(--amber);font-size:12px;padding:5px 10px;border-radius:20px;cursor:pointer;z-index:2;}
+.photo-del-btn{position:absolute;bottom:8px;left:10px;background:rgba(0,0,0,0.6);color:var(--red);font-size:12px;padding:5px 10px;border-radius:20px;cursor:pointer;z-index:2;}
+.detail-body{padding:16px 20px;flex:1;overflow-y:auto;}
+.detail-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.detail-name{font-size:22px;font-weight:700;margin-bottom:6px;}
+.detail-stars-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.detail-star{font-size:26px;cursor:pointer;color:var(--muted2);}
+.detail-star.on{color:var(--amber);}
+.detail-section{font-size:11px;color:var(--muted2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;margin-top:12px;}
+.detail-val{font-size:14px;color:#ccc;line-height:1.6;}
+.detail-link{font-size:14px;color:var(--blue);word-break:break-all;cursor:pointer;}
+.detail-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;}
+.detail-btn{padding:12px;border-radius:12px;font-size:13px;font-weight:600;text-align:center;cursor:pointer;}
+.btn-nav{background:var(--blue-bg);color:var(--blue);}
+.btn-link{background:var(--blue-bg);color:var(--blue);}
+.btn-edit{background:var(--yellow-bg);color:var(--yellow);}
+.btn-done{background:var(--green-bg);color:var(--green);}
+.btn-del{background:var(--red-bg);color:var(--red);}
+.modal-wrap{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;display:flex;align-items:flex-end;justify-content:center;}
+.modal-wrap.hidden{display:none;}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.modal-title{font-size:17px;font-weight:700;margin-bottom:16px;text-align:center;}
+.modal-input{width:100%;background:var(--card2);border:0.5px solid var(--border2);border-radius:10px;padding:12px;font-size:15px;color:var(--text);margin-bottom:10px;font-family:inherit;}
+.modal-input::placeholder{color:var(--muted2);}
+.modal-label{font-size:12px;color:var(--muted);margin-bottom:4px;display:block;}
+.modal-btns{display:flex;gap:8px;margin-top:4px;}
+.modal-btn{flex:1;padding:13px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;border:none;font-family:inherit;}
+.modal-btn-cancel{background:var(--card2);color:var(--muted);}
+.modal-btn-ok{background:var(--amber);color:#000;}
+.modal-btn-danger{background:var(--red-bg);color:var(--red);}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.emoji-opt{font-size:24px;padding:6px;border-radius:8px;cursor:pointer;border:1px solid transparent;}
+.emoji-opt.sel{border-color:var(--amber);background:var(--amber-bg);}
+.star-picker{display:flex;gap:4px;margin-bottom:12px;}
+.star-pick{font-size:28px;cursor:pointer;color:var(--muted2);}
+.star-pick.on{color:var(--amber);}
+.photo-upload{width:100%;background:var(--card2);border:0.5px dashed var(--border2);border-radius:10px;padding:16px;text-align:center;cursor:pointer;color:var(--muted);font-size:14px;margin-bottom:10px;}
+.photo-preview{width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:10px;display:block;}
+.edit-list-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border);}
+.edit-list-name{flex:1;font-size:14px;}
+.edit-btn{font-size:13px;padding:5px 10px;border-radius:8px;cursor:pointer;border:none;font-family:inherit;}
+.edit-btn-del{background:var(--red-bg);color:var(--red);}
+.empty{text-align:center;padding:60px 20px;color:var(--muted);font-size:15px;line-height:2;}
+.loading{text-align:center;padding:40px;color:var(--muted);font-size:14px;}
+
+/* Login page */
+.login-page{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px 20px;gap:20px;}
+.login-logo{font-size:60px;margin-bottom:10px;}
+.login-title{font-size:28px;font-weight:700;}
+.login-sub{font-size:14px;color:var(--muted);text-align:center;line-height:1.6;}
+.login-btn{width:100%;max-width:320px;padding:16px;border-radius:14px;border:none;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;}
+.login-btn-google{background:#fff;color:#333;}
+.login-btn-email{background:var(--amber);color:#000;}
+.login-divider{color:var(--muted);font-size:13px;}
+
+/* Friends page */
+.friend-card{display:flex;align-items:center;gap:12px;padding:12px 20px;border-bottom:0.5px solid var(--border);cursor:pointer;}
+.friend-avatar{width:44px;height:44px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden;}
+.friend-avatar img{width:100%;height:100%;object-fit:cover;}
+.friend-body{flex:1;}
+.friend-name{font-size:15px;font-weight:600;}
+.friend-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+.friend-action{color:var(--amber);font-size:13px;}
+.profile-section{padding:20px;border-bottom:0.5px solid var(--border);}
+.profile-avatar{width:80px;height:80px;border-radius:50%;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 12px;overflow:hidden;}
+.profile-avatar img{width:100%;height:100%;object-fit:cover;}
+.profile-name{text-align:center;font-size:20px;font-weight:700;margin-bottom:4px;}
+.profile-email{text-align:center;font-size:13px;color:var(--muted);}
+.profile-id{text-align:center;font-size:12px;color:var(--muted2);margin-top:4px;}
+.sync-badge{position:absolute;top:10px;right:60px;background:var(--green-bg);color:var(--green);font-size:11px;padding:3px 8px;border-radius:20px;}
+.sync-badge.syncing{background:var(--amber-bg);color:var(--amber);}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="header" id="header">
+    <div class="header-back" id="headerBack" style="display:none">‹</div>
+    <div class="header-title" id="headerTitle">我的收藏</div>
+    <div class="header-action" id="headerAction"></div>
+  </div>
+  <div class="page" id="pageContent"></div>
+  <div class="bottom-nav" id="bottomNav" style="display:none"></div>
+</div>
+<div class="modal-wrap hidden" id="modalWrap">
+  <div class="modal" id="modalBody"></div>
+</div>
+<input type="file" id="photoInput" accept="image/*" style="display:none"/>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getFirestore, doc, setDoc, getDoc, collection, query, where, onSnapshot, addDoc, updateDoc, deleteDoc, getDocs, orderBy } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAkHCehPV2vA6npTAXnENIfX07GqmZRDio",
+  authDomain: "my-collection-app-c51f4.firebaseapp.com",
+  projectId: "my-collection-app-c51f4",
+  storageBucket: "my-collection-app-c51f4.firebasestorage.app",
+  messagingSenderId: "27195030094",
+  appId: "1:27195030094:web:14a4ffec9b541fb5db611f"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const auth = getAuth(fbApp);
+const db = getFirestore(fbApp);
+
+// ===== STATE =====
+let currentUser = null;
+let userProfile = null;
+let items = [];
+let shopItems = [];
+let countries = [];
+let shopCats = [];
+let CATS = [{id:'eat',label:'好吃',emoji:'🍜',cls:'tag-eat'},{id:'play',label:'好玩',emoji:'🏞',cls:'tag-play'},{id:'buy',label:'好買',emoji:'🏪',cls:'tag-buy'},{id:'go',label:'想去',emoji:'📍',cls:'tag-go'}];
+let friends = [];
+let friendRequests = [];
+let viewingUid = null; // null = own, uid = friend's
+let nav = {page:'countries',country:null,region:null,cat:null,filter:'all',shopCat:null,prevPage:null,itemId:null};
+let pickStars=0, pickEmoji='🌏', pickPhotos=[], editingId=null;
+const EMOJIS=['🇹🇼','🇯🇵','🇰🇷','🇺🇸','🇬🇧','🇫🇷','🇮🇹','🇩🇪','🇹🇭','🇸🇬','🇦🇺','🇨🇳','🍜','🍕','🍣','🍦','🧋','☕','🍺','🌮','🥗','🏖','🏞','🎬','🎵','🎮','🎨','🛍','👗','👟','💄','💍','📍','🌏','🏨','🚗','✈️','🏔','⭐','🎁'];
+const DEFAULT_COUNTRIES = [{id:'tw',name:'台灣',emoji:'🇹🇼',regions:['台中','台北','高雄']},{id:'jp',name:'日本',emoji:'🇯🇵',regions:['東京','大阪','京都']}];
+const DEFAULT_SHOPCATS = [{id:'clothes',label:'衣服',emoji:'👗'},{id:'shoes',label:'鞋子',emoji:'👟'},{id:'beauty',label:'美妝',emoji:'💄'},{id:'food',label:'食品',emoji:'🍜'},{id:'other',label:'其他',emoji:'📦'}];
+
+// ===== AUTH =====
+onAuthStateChanged(auth, async (user) => {
+  if(user) {
+    currentUser = user;
+    await loadUserProfile();
+    await loadUserData();
+    showMainApp();
+  } else {
+    currentUser = null;
+    showLoginPage();
+  }
+});
+
+async function loadUserProfile() {
+  const d = await getDoc(doc(db,'users',currentUser.uid));
+  if(d.exists()) {
+    userProfile = d.data();
+  } else {
+    userProfile = {
+      uid: currentUser.uid,
+      name: currentUser.displayName || '新用戶',
+      email: currentUser.email,
+      photo: currentUser.photoURL || '',
+      friendCode: Math.random().toString(36).slice(2,8).toUpperCase(),
+      friends: [],
+      createdAt: Date.now()
+    };
+    await setDoc(doc(db,'users',currentUser.uid), userProfile);
+  }
+}
+
+async function loadUserData() {
+  const uid = viewingUid || currentUser.uid;
+  const d = await getDoc(doc(db,'userData',uid));
+  if(d.exists()) {
+    const data = d.data();
+    countries = data.countries || DEFAULT_COUNTRIES;
+    shopCats = data.shopCats || DEFAULT_SHOPCATS;
+    if(data.cats && data.cats.length) CATS = data.cats;
+  } else {
+    countries = DEFAULT_COUNTRIES;
+    shopCats = DEFAULT_SHOPCATS;
+    if(!viewingUid) await saveUserData();
+  }
+  // Load items
+  const itemsSnap = await getDocs(collection(db,'userData',uid,'items'));
+  items = itemsSnap.docs.map(d=>({id:d.id,...d.data()}));
+  const shopSnap = await getDocs(collection(db,'userData',uid,'shopItems'));
+  shopItems = shopSnap.docs.map(d=>({id:d.id,...d.data()}));
+  // Load friends
+  if(!viewingUid) {
+    friends = userProfile.friends || [];
+  }
+}
+
+async function saveUserData() {
+  if(viewingUid) return;
+  await setDoc(doc(db,'userData',currentUser.uid), {countries, shopCats, cats:CATS, updatedAt:Date.now()});
+}
+
+async function saveItem(item) {
+  if(viewingUid) return;
+  const {id, ...data} = item;
+  if(id && typeof id === 'string' && id.length > 5) {
+    await setDoc(doc(db,'userData',currentUser.uid,'items',id), data);
+  } else {
+    const ref = await addDoc(collection(db,'userData',currentUser.uid,'items'), data);
+    item.id = ref.id;
+  }
+}
+async function deleteItemDB(id) {
+  if(viewingUid) return;
+  await deleteDoc(doc(db,'userData',currentUser.uid,'items',id));
+}
+async function saveShopItem(item) {
+  if(viewingUid) return;
+  const {id, ...data} = item;
+  if(id && typeof id === 'string' && id.length > 5) {
+    await setDoc(doc(db,'userData',currentUser.uid,'shopItems',id), data);
+  } else {
+    const ref = await addDoc(collection(db,'userData',currentUser.uid,'shopItems'), data);
+    item.id = ref.id;
+  }
+}
+async function deleteShopItemDB(id) {
+  if(viewingUid) return;
+  await deleteDoc(doc(db,'userData',currentUser.uid,'shopItems',id));
+}
+
+// Store photo as base64 directly (no Storage needed)
+async function uploadPhoto(base64, path) {
+  return base64; // Return base64 directly
+}
+
+// ===== LOGIN PAGE =====
+function showLoginPage() {
+  document.getElementById('bottomNav').style.display='none';
+  document.getElementById('header').style.display='none';
+  document.getElementById('pageContent').innerHTML = `
+    <div class="login-page">
+      <div class="login-logo">🗂</div>
+      <div class="login-title">我的收藏</div>
+      <div class="login-sub">記錄你的好吃、好玩、好買<br>還可以看朋友的收藏！</div>
+      <button class="login-btn login-btn-google" onclick="loginGoogle()">
+        <span>G</span> 用 Google 帳號登入
+      </button>
+      <div class="login-divider">— 或 —</div>
+      <button class="login-btn login-btn-email" onclick="showEmailLogin()">
+        📧 用 Email 登入 / 註冊
+      </button>
+    </div>`;
+}
+
+window.loginGoogle = async function() {
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch(e) { alert('登入失敗：'+e.message); }
+};
+
+window.showEmailLogin = function() {
+  openModal(`<div class="modal-title">Email 登入 / 註冊</div>
+    <label class="modal-label">Email</label>
+    <input class="modal-input" id="mEmail" type="email" placeholder="your@email.com"/>
+    <label class="modal-label">密碼（至少6位）</label>
+    <input class="modal-input" id="mPwd" type="password" placeholder="••••••"/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="doEmailLogin()">登入</div>
+      <div class="modal-btn modal-btn-ok" onclick="doEmailRegister()">註冊</div>
+    </div>`);
+};
+
+window.doEmailLogin = async function() {
+  const email = document.getElementById('mEmail').value.trim();
+  const pwd = document.getElementById('mPwd').value;
+  try { await signInWithEmailAndPassword(auth, email, pwd); closeModal(); }
+  catch(e) { alert('登入失敗：'+e.message); }
+};
+
+window.doEmailRegister = async function() {
+  const email = document.getElementById('mEmail').value.trim();
+  const pwd = document.getElementById('mPwd').value;
+  try { await createUserWithEmailAndPassword(auth, email, pwd); closeModal(); }
+  catch(e) { alert('註冊失敗：'+e.message); }
+};
+
+// ===== MAIN APP =====
+function showMainApp() {
+  document.getElementById('header').style.display='flex';
+  document.getElementById('bottomNav').style.display='flex';
+  render();
+}
+
+function isReadOnly() { return !!viewingUid; }
+
+function render() {
+  renderHeader();
+  renderPage();
+  renderBottomNav();
+}
+
+function renderHeader() {
+  const back = document.getElementById('headerBack');
+  const title = document.getElementById('headerTitle');
+  const action = document.getElementById('headerAction');
+  back.style.display='none'; action.textContent=''; action.onclick=null;
+
+  const pages = {
+    'countries': ['我的收藏', null, isReadOnly()?null:'編輯', ()=>openEditCountries()],
+    'regions': ['', ()=>{nav.page='countries';viewingUid=null;render();}, isReadOnly()?null:'編輯', ()=>openEditRegions()],
+    'cats': ['', ()=>{nav.page='regions';render();}, isReadOnly()?null:'編輯', ()=>openEditCats()],
+    'list': ['', ()=>{nav.page='cats';render();}, isReadOnly()?null:'＋', ()=>openAddItem()],
+    'alllist': ['全部收藏', ()=>{nav.page='regions';render();}, isReadOnly()?null:'＋', ()=>openAddItem()],
+    'detail': ['詳細', ()=>{nav.page=nav.prevPage||'list';render();}, isReadOnly()?null:'編輯', ()=>openEditItem(nav.itemId)],
+    'shop': ['🛒 網購', null, isReadOnly()?null:'編輯', ()=>openEditShopCats()],
+    'shopcat': ['', ()=>{nav.page='shop';render();}, isReadOnly()?null:'＋', ()=>openAddShop()],
+    'shopalllist': ['全部網購', ()=>{nav.page='shop';render();}, isReadOnly()?null:'＋', ()=>openAddShop()],
+    'shopdetail': ['詳細', ()=>{nav.page=nav.prevPage||'shopcat';render();}, isReadOnly()?null:'編輯', ()=>openEditShop(nav.itemId)],
+    'friends': ['好友收藏', null, '＋ 新增', ()=>openAddFriend()],
+    'profile': ['我的帳號', null, null, null],
+  };
+
+  const cfg = pages[nav.page];
+  if(!cfg) return;
+
+  let t = cfg[0];
+  if(nav.page==='regions') { const c=countries.find(x=>x.id===nav.country); t=(c?c.emoji+' '+c.name:''); }
+  if(nav.page==='cats') t='📍 '+nav.region;
+  if(nav.page==='list') { const cat=CATS.find(c=>c.id===nav.cat); t=cat?cat.emoji+' '+cat.label:''; }
+  if(nav.page==='shopcat') { const sc=shopCats.find(c=>c.id===nav.shopCat); t=sc?sc.emoji+' '+sc.label:''; }
+
+  if(isReadOnly() && ['countries','regions','cats','list','alllist','shop','shopcat','shopalllist'].includes(nav.page)) {
+    const fp = friends.find(f=>f.uid===viewingUid);
+    title.textContent = (fp?fp.name+'的':'朋友的')+' '+t;
+  } else {
+    title.textContent = t;
+  }
+
+  if(cfg[1]) { back.style.display='block'; back.onclick=cfg[1]; }
+  if(cfg[2]) { action.textContent=cfg[2]; action.onclick=cfg[3]; }
+}
+
+function renderPage() {
+  const p = document.getElementById('pageContent');
+  const pages = {
+    'countries': renderCountries,
+    'regions': renderRegions,
+    'cats': renderCats,
+    'list': renderList,
+    'alllist': renderAllList,
+    'detail': renderDetail,
+    'shop': renderShop,
+    'shopcat': renderShopCat,
+    'shopalllist': renderShopAllList,
+    'shopdetail': renderShopDetail,
+    'friends': renderFriends,
+    'profile': renderProfile,
+  };
+  p.innerHTML = (pages[nav.page]||renderCountries)();
+  setTimeout(initSwipers, 50);
+}
+
+function renderBottomNav() {
+  const btns = [
+    {ico:'🌏',lbl:'收藏',pages:['countries','regions','cats','list','alllist','detail']},
+    {ico:'🛒',lbl:'網購',pages:['shop','shopcat','shopalllist','shopdetail']},
+    {ico:'👥',lbl:'好友',pages:['friends']},
+    {ico:'👤',lbl:'我的',pages:['profile']},
+  ];
+  document.getElementById('bottomNav').innerHTML = btns.map(b=>{
+    const active = b.pages.includes(nav.page);
+    return `<div class="nav-btn${active?' active':''}" onclick="goNav('${b.pages[0]}')">
+      <div class="nav-ico">${b.ico}</div>
+      <div class="nav-lbl">${b.lbl}</div>
+    </div>`;
+  }).join('');
+}
+
+window.goNav = function(page) {
+  if(['countries','regions','cats','list','alllist','detail'].includes(page)) {
+    if(viewingUid && !['countries'].includes(page)) {}
+    else { viewingUid=null; nav={page:'countries',country:null,region:null,cat:null,filter:'all',shopCat:null,prevPage:null,itemId:null}; }
+  }
+  nav.page=page;
+  render();
+};
+
+// ===== COUNTRIES =====
+function renderCountries() {
+  let h = '<div class="section-hdr">— 選擇國家 —</div>';
+  if(!countries.length) return '<div class="empty">還沒有國家<br>'+(isReadOnly()?'':'按右上角開始新增！')+'</div>';
+  countries.forEach(c=>{
+    const cnt = items.filter(i=>i.country===c.id&&!i.done).length;
+    h += `<div class="list-item" onclick="goRegions('${c.id}')">
+      <div class="list-icon" style="background:#1a1a1a;font-size:28px">${c.emoji}</div>
+      <div class="list-body"><div class="list-name">${c.name}</div><div class="list-sub">${cnt} 筆收藏</div></div>
+      <div class="list-arrow">›</div></div>`;
+  });
+  return h;
+}
+
+function renderRegions() {
+  const c = countries.find(x=>x.id===nav.country); if(!c) return '';
+  const allCnt = items.filter(i=>i.country===c.id&&!i.done).length;
+  let h = `<div class="list-item" style="background:var(--yellow-bg)" onclick="goAllList()">
+    <div class="list-icon" style="background:var(--yellow-bg);font-size:22px">📋</div>
+    <div class="list-body"><div class="list-name" style="color:var(--yellow)">${c.name}全部收藏</div>
+    <div class="list-sub" style="color:var(--muted)">不分地區 · ${allCnt} 筆</div></div>
+    <div class="list-arrow" style="color:var(--yellow)">›</div></div>`;
+  h += '<div class="section-hdr">— 依地區 —</div>';
+  (c.regions||[]).forEach(r=>{
+    const cnt = items.filter(i=>i.country===c.id&&i.region===r&&!i.done).length;
+    h += `<div class="list-item" onclick="goCats('${r}')">
+      <div class="list-icon" style="background:var(--blue-bg);font-size:20px">📍</div>
+      <div class="list-body"><div class="list-name">${r}</div><div class="list-sub">${cnt} 筆</div></div>
+      <div class="list-arrow">›</div></div>`;
+  });
+  return h;
+}
+
+function renderCats() {
+  return CATS.map(cat=>{
+    const cnt = items.filter(i=>i.country===nav.country&&i.region===nav.region&&i.cat===cat.id&&!i.done).length;
+    return `<div class="list-item" onclick="goList('${cat.id}')">
+      <div class="list-icon" style="background:${getCatBg(cat.id)};font-size:22px">${cat.emoji}</div>
+      <div class="list-body"><div class="list-name">${cat.label}</div><div class="list-sub">${cnt} 筆</div></div>
+      <div class="list-arrow">›</div></div>`;
+  }).join('');
+}
+
+function getCatBg(id){return{eat:'var(--amber-bg)',play:'var(--green-bg)',buy:'var(--purple-bg)',go:'var(--red-bg)'}[id]||'var(--card2)';}
+
+function getFilteredItems() {
+  let base = items.filter(i=>!i.done);
+  if(nav.page==='list') base = items.filter(i=>i.country===nav.country&&i.region===nav.region&&i.cat===nav.cat&&!i.done);
+  else if(nav.page==='alllist') {
+    base = items.filter(i=>i.country===nav.country&&!i.done);
+    if(nav.filter&&nav.filter!=='all') base = base.filter(i=>i.cat===nav.filter);
+  }
+  return base.sort((a,b)=>(b.stars||0)-(a.stars||0));
+}
+
+function renderListItem(item, from) {
+  const cat = CATS.find(c=>c.id===item.cat)||CATS[0];
+  const starsStr = '★'.repeat(item.stars||0);
+  let sub = `<span class="stars" style="font-size:11px">${starsStr}</span>`;
+  if(from==='alllist') sub += ` <span class="tag tag-loc">📍${item.region}</span><span class="tag ${cat.cls}">${cat.label}</span>`;
+  if(item.note) sub += ` <span style="color:var(--muted);font-size:11px">${item.note.slice(0,15)}${item.note.length>15?'…':''}</span>`;
+  const hasPhoto = item.photos&&item.photos.length;
+  const thumb = hasPhoto?`background:var(--card2);`:`background:${getCatBg(item.cat)};`;
+  const icon = hasPhoto?`<img src="${item.photos[0]}" style="width:100%;height:100%;object-fit:cover;"/>`:cat.emoji;
+  return `<div class="list-item" onclick="goDetail('${item.id}','${from}')">
+    <div class="list-icon" style="${thumb}font-size:22px">${icon}</div>
+    <div class="list-body"><div class="list-name">${item.name}</div><div class="list-sub">${sub}</div></div>
+    <div class="list-arrow">›</div></div>`;
+}
+
+function renderList() {
+  const f = getFilteredItems();
+  if(!f.length) return `<div class="empty">還沒有收藏${isReadOnly()?'':('<br>按右上角 ＋ 新增！')}</div>`;
+  return `<div class="section-hdr">— 共 ${f.length} 筆 —</div>`+f.map(i=>renderListItem(i,'list')).join('');
+}
+
+function renderAllList() {
+  nav.filter = nav.filter||'all';
+  const f = getFilteredItems();
+  let h = '<div class="filter-bar">';
+  h += `<div class="filter-pill${nav.filter==='all'?' active':''}" onclick="setFilter('all')">全部</div>`;
+  CATS.forEach(cat=>{ h+=`<div class="filter-pill${nav.filter===cat.id?' active':''}" onclick="setFilter('${cat.id}')">${cat.emoji} ${cat.label}</div>`; });
+  h += '</div>';
+  if(!f.length) return h+'<div class="empty">這個分類還沒有收藏</div>';
+  h += `<div class="section-hdr">— 共 ${f.length} 筆 —</div>`;
+  return h + f.map(i=>renderListItem(i,'alllist')).join('');
+}
+
+function renderDetail() {
+  const item = items.find(i=>i.id===nav.itemId); if(!item) return '<div class="empty">找不到</div>';
+  const cat = CATS.find(c=>c.id===item.cat)||CATS[0];
+  const c = countries.find(x=>x.id===item.country);
+  const photos = item.photos||[];
+  const slides = photos.length ? photos.map(p=>`<div class="photo-swiper-slide"><img src="${p}"/></div>`).join('') :
+    `<div class="photo-swiper-slide"><div class="slide-emoji">${cat.emoji}</div></div>`;
+  const dots = photos.length>1 ? photos.map((_,i)=>`<div class="photo-dot${i===0?' on':''}" id="dot_${item.id}_${i}"></div>`).join('') : '';
+  const count = photos.length>1 ? `<div class="photo-count">1 / ${photos.length}</div>` : '';
+  let h = `<div class="photo-swiper" id="swiper_${item.id}" data-idx="0" data-count="${photos.length}" data-id="${item.id}" data-type="item">
+    <div class="photo-swiper-track" id="track_${item.id}">${slides}</div>
+    <div class="photo-swiper-overlay"></div>
+    ${dots?'<div class="photo-dots">'+dots+'</div>':''}${count}
+    ${!isReadOnly()?`<div class="photo-add-btn" onclick="addPhoto('${item.id}','item')">📷 ＋照片</div>`:''}
+    ${!isReadOnly()&&photos.length?`<div class="photo-del-btn" onclick="delPhoto('${item.id}','item')">🗑 刪除此張</div>`:''}
+  </div>`;
+  const starsHtml = [1,2,3,4,5].map(v=>`<span class="detail-star${v<=(item.stars||0)?' on':''}" onclick="${isReadOnly()?'':(`setItemStar('${item.id}',${v})`)}">★</span>`).join('');
+  h += `<div class="detail-body">
+    <div class="detail-tags">
+      ${c?`<span class="tag" style="background:#1a1a1a;color:var(--muted)">${c.emoji} ${c.name}</span>`:''}
+      <span class="tag tag-loc">📍 ${item.region}</span>
+      <span class="tag ${cat.cls}">${cat.label}</span>
+    </div>
+    <div class="detail-name">${item.name}</div>
+    <div class="detail-stars-row">${starsHtml}</div>
+    ${item.note?`<div class="detail-section">備註</div><div class="detail-val">${item.note}</div>`:''}
+    ${item.address?`<div class="detail-section">地址</div><div class="detail-val">${item.address}</div>`:''}
+    ${item.link?`<div class="detail-section">連結</div><div class="detail-link" onclick="openLink('${item.link}')">${item.link}</div>`:''}
+    <div class="detail-btns">
+      ${item.address?`<div class="detail-btn btn-nav" onclick="openMap('${item.address}')">🧭 導航</div>`:''}
+      ${item.link?`<div class="detail-btn btn-link" onclick="openLink('${item.link}')">🔗 連結</div>`:''}
+      ${!isReadOnly()?`<div class="detail-btn btn-edit" onclick="openEditItem('${item.id}')">✏️ 編輯</div>`:''}
+      ${!isReadOnly()?`<div class="detail-btn btn-done" onclick="markDone('${item.id}')">✓ 完成</div>`:''}
+      ${!isReadOnly()?`<div class="detail-btn btn-del" onclick="deleteItem('${item.id}')">🗑 刪除</div>`:''}
+    </div>
+  </div>`;
+  return h;
+}
+
+// ===== SHOP =====
+function renderShop() {
+  const allCnt = shopItems.filter(i=>!i.done).length;
+  let h = `<div class="list-item" style="background:var(--blue-bg)" onclick="goShopAllList()">
+    <div class="list-icon" style="background:rgba(77,166,255,0.15);font-size:22px">📋</div>
+    <div class="list-body"><div class="list-name" style="color:var(--blue)">全部網購清單</div>
+    <div class="list-sub" style="color:var(--muted)">${allCnt} 筆</div></div>
+    <div class="list-arrow" style="color:var(--blue)">›</div></div>`;
+  h += '<div class="section-hdr">— 依分類 —</div>';
+  shopCats.forEach(cat=>{
+    const cnt = shopItems.filter(i=>i.shopCat===cat.id&&!i.done).length;
+    h += `<div class="list-item" onclick="goShopCat('${cat.id}')">
+      <div class="list-icon" style="background:var(--blue-bg);font-size:22px">${cat.emoji}</div>
+      <div class="list-body"><div class="list-name">${cat.label}</div><div class="list-sub">${cnt} 筆</div></div>
+      <div class="list-arrow">›</div></div>`;
+  });
+  return h;
+}
+
+function shopListItem(item) {
+  const sc = shopCats.find(c=>c.id===item.shopCat);
+  const hasPhoto = item.photos&&item.photos.length;
+  const thumb = hasPhoto?'background:var(--card2);':'background:var(--blue-bg);';
+  const icon = hasPhoto?`<img src="${item.photos[0]}" style="width:100%;height:100%;object-fit:cover;"/>`:sc?sc.emoji:'🛒';
+  const starsStr = '★'.repeat(item.stars||0);
+  return `<div class="list-item" onclick="goShopDetail('${item.id}')">
+    <div class="list-icon" style="${thumb}font-size:22px">${icon}</div>
+    <div class="list-body"><div class="list-name">${item.name}</div>
+    <div class="list-sub"><span class="stars" style="font-size:11px">${starsStr}</span>
+    ${sc?`<span class="tag tag-shop" style="font-size:9px">${sc.emoji} ${sc.label}</span>`:''}
+    ${item.note?`<span style="color:var(--muted);font-size:11px">${item.note.slice(0,20)}</span>`:''}
+    </div></div><div class="list-arrow">›</div></div>`;
+}
+
+function renderShopCat() {
+  const f = shopItems.filter(i=>i.shopCat===nav.shopCat&&!i.done);
+  if(!f.length) return `<div class="empty">這個分類還沒有網購${isReadOnly()?'':('<br>按右上角 ＋ 新增！')}</div>`;
+  return `<div class="section-hdr">— 共 ${f.length} 筆 —</div>`+f.map(shopListItem).join('');
+}
+
+function renderShopAllList() {
+  const f = shopItems.filter(i=>!i.done);
+  if(!f.length) return '<div class="empty">網購清單是空的</div>';
+  return `<div class="section-hdr">— 全部 ${f.length} 筆 —</div>`+f.map(shopListItem).join('');
+}
+
+function renderShopDetail() {
+  const item = shopItems.find(i=>i.id===nav.itemId); if(!item) return '';
+  const sc = shopCats.find(c=>c.id===item.shopCat);
+  const photos = item.photos||[];
+  const slides = photos.length ? photos.map(p=>`<div class="photo-swiper-slide"><img src="${p}"/></div>`).join('') :
+    `<div class="photo-swiper-slide"><div class="slide-emoji">🛒</div></div>`;
+  const dots = photos.length>1 ? photos.map((_,i)=>`<div class="photo-dot${i===0?' on':''}"></div>`).join('') : '';
+  let h = `<div class="photo-swiper" id="swiper_${item.id}" data-idx="0" data-count="${photos.length}" data-id="${item.id}" data-type="shop">
+    <div class="photo-swiper-track" id="track_${item.id}">${slides}</div>
+    <div class="photo-swiper-overlay"></div>
+    ${dots?'<div class="photo-dots">'+dots+'</div>':''}
+    ${!isReadOnly()?`<div class="photo-add-btn" onclick="addPhoto('${item.id}','shop')">📷 ＋照片</div>`:''}
+    ${!isReadOnly()&&photos.length?`<div class="photo-del-btn" onclick="delPhoto('${item.id}','shop')">🗑 刪除此張</div>`:''}
+  </div>`;
+  const starsHtml = [1,2,3,4,5].map(v=>`<span class="detail-star${v<=(item.stars||0)?' on':''}" onclick="${isReadOnly()?'':(`setShopStar('${item.id}',${v})`)}">★</span>`).join('');
+  h += `<div class="detail-body">
+    <div class="detail-tags"><span class="tag tag-shop">🛒 網購</span>${sc?`<span class="tag" style="background:var(--blue-bg);color:var(--blue)">${sc.emoji} ${sc.label}</span>`:''}</div>
+    <div class="detail-name">${item.name}</div>
+    <div class="detail-stars-row">${starsHtml}</div>
+    ${item.note?`<div class="detail-section">備註</div><div class="detail-val">${item.note}</div>`:''}
+    ${item.link?`<div class="detail-section">連結</div><div class="detail-link" onclick="openLink('${item.link}')">${item.link}</div>`:''}
+    <div class="detail-btns">
+      ${item.link?`<div class="detail-btn btn-link" onclick="openLink('${item.link}')">🔗 連結</div>`:''}
+      ${!isReadOnly()?`<div class="detail-btn btn-edit" onclick="openEditShop('${item.id}')">✏️ 編輯</div>`:''}
+      ${!isReadOnly()?`<div class="detail-btn btn-done" onclick="markShopDone('${item.id}')">✓ 完成</div>`:''}
+      ${!isReadOnly()?`<div class="detail-btn btn-del" onclick="deleteShopItem('${item.id}')">🗑 刪除</div>`:''}
+    </div>
+  </div>`;
+  return h;
+}
+
+// ===== FRIENDS =====
+function renderFriends() {
+  let h = '';
+  if(friends.length===0) {
+    h = '<div class="empty">還沒有好友<br>按右上角 ＋ 新增好友！</div>';
+  } else {
+    h = '<div class="section-hdr">— 好友列表 —</div>';
+    friends.forEach(f=>{
+      h += `<div class="friend-card" onclick="viewFriend('${f.uid}')">
+        <div class="friend-avatar">${f.photo?`<img src="${f.photo}"/>`:'👤'}</div>
+        <div class="friend-body">
+          <div class="friend-name">${f.name}</div>
+          <div class="friend-sub">${f.email||''}</div>
+        </div>
+        <div class="friend-action">查看收藏 ›</div>
+      </div>`;
+    });
+  }
+  // My friend code
+  h += `<div style="margin:20px;background:var(--card);border-radius:16px;padding:16px;text-align:center;">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">我的好友代碼（讓朋友輸入這個）</div>
+    <div style="font-size:28px;font-weight:700;letter-spacing:4px;color:var(--amber)">${userProfile?.friendCode||'------'}</div>
+    <div style="font-size:11px;color:var(--muted2);margin-top:6px;">朋友輸入此代碼就能加你為好友</div>
+  </div>`;
+  return h;
+}
+
+window.openAddFriend = function() {
+  openModal(`<div class="modal-title">新增好友</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:12px;text-align:center;">輸入朋友的好友代碼</div>
+    <input class="modal-input" id="mFriendCode" placeholder="例：AB12CD" maxlength="6" style="text-transform:uppercase;text-align:center;font-size:20px;font-weight:700;letter-spacing:4px;"/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doAddFriend()">新增</div>
+    </div>`);
+};
+
+window.doAddFriend = async function() {
+  const code = document.getElementById('mFriendCode').value.trim().toUpperCase();
+  if(!code || code.length<4) { alert('請輸入正確的好友代碼'); return; }
+  try {
+    const q = query(collection(db,'users'), where('friendCode','==',code));
+    const snap = await getDocs(q);
+    if(snap.empty) { alert('找不到這個好友代碼'); return; }
+    const friendData = snap.docs[0].data();
+    if(friendData.uid === currentUser.uid) { alert('不能加自己為好友 😅'); return; }
+    if(friends.find(f=>f.uid===friendData.uid)) { alert('這個人已經是你的好友了！'); return; }
+    const newFriend = {uid:friendData.uid, name:friendData.name, email:friendData.email, photo:friendData.photo||''};
+    friends.push(newFriend);
+    userProfile.friends = friends;
+    await setDoc(doc(db,'users',currentUser.uid), userProfile);
+    closeModal();
+    render();
+    alert('✅ 成功加入好友：'+friendData.name);
+  } catch(e) { alert('新增失敗：'+e.message); }
+};
+
+window.viewFriend = async function(uid) {
+  viewingUid = uid;
+  document.getElementById('pageContent').innerHTML = '<div class="loading">載入中...</div>';
+  await loadUserData();
+  nav.page = 'countries';
+  render();
+};
+
+// ===== PROFILE =====
+function renderProfile() {
+  return `<div class="profile-section">
+    <div class="profile-avatar">${userProfile?.photo?`<img src="${userProfile.photo}"/>`:'👤'}</div>
+    <div class="profile-name">${userProfile?.name||'用戶'}</div>
+    <div class="profile-email">${currentUser?.email||''}</div>
+    <div class="profile-id">好友代碼：${userProfile?.friendCode||''}</div>
+  </div>
+  <div class="list-item" onclick="openEditName()">
+    <div class="list-body"><div class="list-name">修改名稱</div></div>
+    <div class="list-arrow">›</div>
+  </div>
+  <div class="list-item" onclick="doSignOut()" style="margin-top:20px;">
+    <div class="list-body"><div class="list-name" style="color:var(--red)">登出</div></div>
+  </div>`;
+}
+
+window.openEditName = function() {
+  openModal(`<div class="modal-title">修改名稱</div>
+    <input class="modal-input" id="mName" value="${userProfile?.name||''}" placeholder="你的名稱"/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doEditName()">儲存</div>
+    </div>`);
+};
+
+window.doEditName = async function() {
+  const name = document.getElementById('mName').value.trim();
+  if(!name) return;
+  userProfile.name = name;
+  await updateProfile(currentUser, {displayName: name});
+  await setDoc(doc(db,'users',currentUser.uid), userProfile);
+  closeModal(); render();
+};
+
+window.doSignOut = async function() {
+  if(!confirm('確定要登出？')) return;
+  await signOut(auth);
+};
+
+// ===== NAVIGATION =====
+window.goRegions = function(cid) { nav.country=cid; nav.page='regions'; render(); };
+window.goCats = function(r) { nav.region=r; nav.page='cats'; render(); };
+window.goList = function(cat) { nav.cat=cat; nav.page='list'; render(); };
+window.goAllList = function() { nav.page='alllist'; nav.filter='all'; render(); };
+window.goDetail = function(id,from) { nav.prevPage=from; nav.itemId=id; nav.page='detail'; render(); };
+window.goShopCat = function(id) { nav.shopCat=id; nav.page='shopcat'; render(); };
+window.goShopAllList = function() { nav.page='shopalllist'; render(); };
+window.goShopDetail = function(id) { nav.prevPage='shopcat'; nav.itemId=id; nav.page='shopdetail'; render(); };
+window.setFilter = function(f) { nav.filter=f; render(); };
+window.openLink = function(url) { if(url) window.open(url,'_blank'); };
+window.openMap = function(addr) { if(addr) window.open('https://maps.google.com/?q='+encodeURIComponent(addr),'_blank'); };
+
+// ===== STARS =====
+window.setItemStar = async function(id,v) {
+  const item = items.find(i=>i.id===id); if(!item) return;
+  item.stars = item.stars===v?0:v;
+  await saveItem(item); render();
+};
+window.setShopStar = async function(id,v) {
+  const item = shopItems.find(i=>i.id===id); if(!item) return;
+  item.stars = item.stars===v?0:v;
+  await saveShopItem(item); render();
+};
+
+// ===== DONE / DELETE =====
+window.markDone = async function(id) {
+  if(!confirm('標記完成？')) return;
+  const item = items.find(i=>i.id===id); if(!item) return;
+  item.done = true;
+  await saveItem(item); nav.page=nav.prevPage||'list'; render();
+};
+window.markShopDone = async function(id) {
+  if(!confirm('標記完成？')) return;
+  const item = shopItems.find(i=>i.id===id); if(!item) return;
+  item.done = true;
+  await saveShopItem(item); nav.page='shop'; render();
+};
+window.deleteItem = async function(id) {
+  if(!confirm('確定刪除？')) return;
+  items = items.filter(i=>i.id!==id);
+  await deleteItemDB(id); nav.page=nav.prevPage||'list'; render();
+};
+window.deleteShopItem = async function(id) {
+  if(!confirm('確定刪除？')) return;
+  shopItems = shopItems.filter(i=>i.id!==id);
+  await deleteShopItemDB(id); nav.page='shop'; render();
+};
+
+// ===== PHOTOS =====
+window.addPhoto = function(id, type) {
+  document.getElementById('photoInput').multiple = true;
+  document.getElementById('photoInput').onchange = async function(e) {
+    const files = Array.from(e.target.files); if(!files.length) return;
+    document.getElementById('pageContent').innerHTML = '<div class="loading">上傳照片中...</div>';
+    for(const f of files) {
+      const base64 = await new Promise(res=>{ const r=new FileReader(); r.onload=ev=>res(ev.target.result); r.readAsDataURL(f); });
+        const url = base64; // Store base64 directly
+      if(type==='item') {
+        const item = items.find(i=>i.id===id);
+        if(item) { if(!item.photos) item.photos=[]; item.photos.push(url); await saveItem(item); }
+      } else {
+        const item = shopItems.find(i=>i.id===id);
+        if(item) { if(!item.photos) item.photos=[]; item.photos.push(url); await saveShopItem(item); }
+      }
+    }
+    e.target.value=''; render();
+  };
+  document.getElementById('photoInput').click();
+};
+
+window.delPhoto = async function(id, type) {
+  const swiper = document.getElementById('swiper_'+id);
+  const idx = swiper?parseInt(swiper.dataset.idx)||0:0;
+  if(!confirm('刪除這張照片？')) return;
+  if(type==='item') {
+    const item = items.find(i=>i.id===id);
+    if(item&&item.photos) { item.photos.splice(idx,1); await saveItem(item); }
+  } else {
+    const item = shopItems.find(i=>i.id===id);
+    if(item&&item.photos) { item.photos.splice(idx,1); await saveShopItem(item); }
+  }
+  render();
+};
+
+// ===== MODAL =====
+window.openModal = function(html) {
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modalWrap').classList.remove('hidden');
+};
+window.closeModal = function() { document.getElementById('modalWrap').classList.add('hidden'); };
+document.getElementById('modalWrap').addEventListener('click', e=>{ if(e.target===document.getElementById('modalWrap')) closeModal(); });
+
+window.pickE = function(e) {
+  pickEmoji=e;
+  document.querySelectorAll('.emoji-opt').forEach(el=>el.classList.toggle('sel',el.textContent===e));
+};
+window.setPickStar = function(v) {
+  pickStars=pickStars===v?0:v;
+  document.querySelectorAll('.star-pick').forEach((s,i)=>s.classList.toggle('on',i<pickStars));
+};
+
+// ===== ADD/EDIT ITEM =====
+window.openAddItem = function() {
+  pickStars=0; pickPhotos=[];
+  openModal(`<div class="modal-title">新增收藏</div>
+    <label class="modal-label">名稱</label>
+    <input class="modal-input" id="mName" placeholder="例：青木原拉麵"/>
+    <label class="modal-label">分類</label>
+    <select class="modal-input" id="mCat">${CATS.map(c=>`<option value="${c.id}"${c.id===nav.cat?' selected':''}>${c.emoji} ${c.label}</option>`).join('')}</select>
+    <label class="modal-label">星星評分</label>
+    <div class="star-picker" id="starPick">${[1,2,3,4,5].map(v=>`<span class="star-pick" onclick="setPickStar(${v})">★</span>`).join('')}</div>
+    <label class="modal-label">備註（選填）</label>
+    <input class="modal-input" id="mNote" placeholder="例：必點乾麵"/>
+    <label class="modal-label">地址（選填）</label>
+    <input class="modal-input" id="mAddr" placeholder="例：台中市西區民權路"/>
+    <label class="modal-label">連結（選填）</label>
+    <input class="modal-input" id="mLink" placeholder="https://..."/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doAddItem()">新增</div>
+    </div>`);
+};
+
+window.doAddItem = async function() {
+  const name = document.getElementById('mName').value.trim(); if(!name) return;
+  const item = {country:nav.country,region:nav.region,cat:document.getElementById('mCat').value,
+    name,stars:pickStars,note:document.getElementById('mNote').value.trim(),
+    address:document.getElementById('mAddr').value.trim(),link:document.getElementById('mLink').value.trim(),
+    photos:[],done:false,createdAt:Date.now()};
+  items.unshift(item);
+  await saveItem(item);
+  closeModal(); render();
+};
+
+window.openEditItem = function(id) {
+  const item = items.find(i=>i.id===id); if(!item) return;
+  pickStars = item.stars||0;
+  openModal(`<div class="modal-title">編輯收藏</div>
+    <label class="modal-label">名稱</label>
+    <input class="modal-input" id="mName" value="${esc(item.name)}"/>
+    <label class="modal-label">分類</label>
+    <select class="modal-input" id="mCat">${CATS.map(c=>`<option value="${c.id}"${c.id===item.cat?' selected':''}>${c.emoji} ${c.label}</option>`).join('')}</select>
+    <label class="modal-label">星星評分</label>
+    <div class="star-picker" id="starPick">${[1,2,3,4,5].map((v,i)=>`<span class="star-pick${i<pickStars?' on':''}" onclick="setPickStar(${v})">★</span>`).join('')}</div>
+    <label class="modal-label">備註</label>
+    <input class="modal-input" id="mNote" value="${esc(item.note||'')}"/>
+    <label class="modal-label">地址</label>
+    <input class="modal-input" id="mAddr" value="${esc(item.address||'')}"/>
+    <label class="modal-label">連結</label>
+    <input class="modal-input" id="mLink" value="${esc(item.link||'')}"/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doEditItem('${id}')">儲存</div>
+    </div>`);
+};
+
+window.doEditItem = async function(id) {
+  const name = document.getElementById('mName').value.trim(); if(!name) return;
+  const item = items.find(i=>i.id===id); if(!item) return;
+  Object.assign(item,{name,cat:document.getElementById('mCat').value,stars:pickStars,
+    note:document.getElementById('mNote').value.trim(),address:document.getElementById('mAddr').value.trim(),
+    link:document.getElementById('mLink').value.trim()});
+  await saveItem(item); closeModal(); render();
+};
+
+// ===== SHOP ADD/EDIT =====
+window.openAddShop = function() {
+  pickStars=0;
+  const defaultCat = nav.shopCat||shopCats[0]?.id||'';
+  openModal(`<div class="modal-title">新增網購</div>
+    <label class="modal-label">名稱</label>
+    <input class="modal-input" id="mName" placeholder="例：Nike Air Max"/>
+    <label class="modal-label">分類</label>
+    <select class="modal-input" id="mShopCat">${shopCats.map(c=>`<option value="${c.id}"${c.id===defaultCat?' selected':''}>${c.emoji} ${c.label}</option>`).join('')}</select>
+    <label class="modal-label">星星評分</label>
+    <div class="star-picker" id="starPick">${[1,2,3,4,5].map(v=>`<span class="star-pick" onclick="setPickStar(${v})">★</span>`).join('')}</div>
+    <label class="modal-label">備註（選填）</label>
+    <input class="modal-input" id="mNote" placeholder="例：尺寸US10"/>
+    <label class="modal-label">連結（選填）</label>
+    <input class="modal-input" id="mLink" placeholder="https://..."/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doAddShop()">新增</div>
+    </div>`);
+};
+
+window.doAddShop = async function() {
+  const name = document.getElementById('mName').value.trim(); if(!name) return;
+  const item = {name,shopCat:document.getElementById('mShopCat').value,stars:pickStars,
+    note:document.getElementById('mNote').value.trim(),link:document.getElementById('mLink').value.trim(),
+    photos:[],done:false,createdAt:Date.now()};
+  shopItems.unshift(item);
+  await saveShopItem(item);
+  closeModal(); render();
+};
+
+window.openEditShop = function(id) {
+  const item = shopItems.find(i=>i.id===id); if(!item) return;
+  pickStars = item.stars||0;
+  openModal(`<div class="modal-title">編輯網購</div>
+    <label class="modal-label">名稱</label>
+    <input class="modal-input" id="mName" value="${esc(item.name)}"/>
+    <label class="modal-label">分類</label>
+    <select class="modal-input" id="mShopCat">${shopCats.map(c=>`<option value="${c.id}"${c.id===item.shopCat?' selected':''}>${c.emoji} ${c.label}</option>`).join('')}</select>
+    <label class="modal-label">星星評分</label>
+    <div class="star-picker" id="starPick">${[1,2,3,4,5].map((v,i)=>`<span class="star-pick${i<pickStars?' on':''}" onclick="setPickStar(${v})">★</span>`).join('')}</div>
+    <label class="modal-label">備註</label>
+    <input class="modal-input" id="mNote" value="${esc(item.note||'')}"/>
+    <label class="modal-label">連結</label>
+    <input class="modal-input" id="mLink" value="${esc(item.link||'')}"/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doEditShop('${id}')">儲存</div>
+    </div>`);
+};
+
+window.doEditShop = async function(id) {
+  const name = document.getElementById('mName').value.trim(); if(!name) return;
+  const item = shopItems.find(i=>i.id===id); if(!item) return;
+  Object.assign(item,{name,shopCat:document.getElementById('mShopCat').value,stars:pickStars,
+    note:document.getElementById('mNote').value.trim(),link:document.getElementById('mLink').value.trim()});
+  await saveShopItem(item); closeModal(); render();
+};
+
+// ===== CATEGORY MANAGEMENT =====
+window.openEditCountries = function() {
+  let h = '<div class="modal-title">管理國家</div>';
+  countries.forEach(c=>{
+    const canDel = !items.some(i=>i.country===c.id);
+    h += `<div class="edit-list-item"><span style="font-size:20px">${c.emoji}</span>
+      <span class="edit-list-name">${c.name}</span>
+      ${canDel?`<button class="edit-btn edit-btn-del" onclick="deleteCountry('${c.id}')">刪除</button>`:'<span style="font-size:10px;color:var(--muted2)">有收藏</span>'}
+      </div>`;
+  });
+  h += `<div style="margin-top:12px"><div class="modal-btn modal-btn-ok" onclick="closeModal();openAddCountry()">＋ 新增國家</div></div>
+    <div style="margin-top:8px"><div class="modal-btn modal-btn-cancel" onclick="closeModal()">完成</div></div>`;
+  openModal(h);
+};
+
+window.openAddCountry = function() {
+  pickEmoji='🌏';
+  openModal(`<div class="modal-title">新增國家</div>
+    <div class="emoji-grid">${EMOJIS.slice(0,20).map(e=>`<span class="emoji-opt${e===pickEmoji?' sel':''}" onclick="pickE('${e}')">${e}</span>`).join('')}</div>
+    <input class="modal-input" id="mName" placeholder="國家名稱（例：法國）"/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doAddCountry()">新增</div>
+    </div>`);
+};
+
+window.doAddCountry = async function() {
+  const name = document.getElementById('mName').value.trim(); if(!name) return;
+  countries.push({id:'c'+Date.now(),name,emoji:pickEmoji,regions:[]});
+  await saveUserData(); closeModal(); render();
+};
+
+window.deleteCountry = async function(id) {
+  if(!confirm('刪除國家？')) return;
+  countries = countries.filter(c=>c.id!==id);
+  await saveUserData(); closeModal(); render();
+};
+
+window.openEditRegions = function() {
+  const c = countries.find(x=>x.id===nav.country); if(!c) return;
+  let h = '<div class="modal-title">管理地區</div>';
+  (c.regions||[]).forEach(r=>{
+    const canDel = !items.some(i=>i.country===c.id&&i.region===r);
+    h += `<div class="edit-list-item"><span>📍</span><span class="edit-list-name">${r}</span>
+      ${canDel?`<button class="edit-btn edit-btn-del" onclick="deleteRegion('${r}')">刪除</button>`:'<span style="font-size:10px;color:var(--muted2)">有收藏</span>'}
+      </div>`;
+  });
+  h += `<div style="margin-top:12px"><div class="modal-btn modal-btn-ok" onclick="closeModal();openAddRegion()">＋ 新增地區</div></div>
+    <div style="margin-top:8px"><div class="modal-btn modal-btn-cancel" onclick="closeModal()">完成</div></div>`;
+  openModal(h);
+};
+
+window.openAddRegion = function() {
+  openModal(`<div class="modal-title">新增地區</div>
+    <input class="modal-input" id="mName" placeholder="地區名稱（例：花蓮）"/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doAddRegion()">新增</div>
+    </div>`);
+};
+
+window.doAddRegion = async function() {
+  const name = document.getElementById('mName').value.trim(); if(!name) return;
+  const c = countries.find(x=>x.id===nav.country); if(!c) return;
+  if(!c.regions) c.regions=[];
+  c.regions.push(name);
+  await saveUserData(); closeModal(); render();
+};
+
+window.deleteRegion = async function(r) {
+  if(!confirm('刪除「'+r+'」地區？')) return;
+  const c = countries.find(x=>x.id===nav.country); if(!c) return;
+  c.regions = c.regions.filter(x=>x!==r);
+  await saveUserData(); closeModal(); render();
+};
+
+window.openEditCats = function() {
+  let h = '<div class="modal-title">管理分類</div>';
+  CATS.forEach(cat=>{
+    const canDel = !items.some(i=>i.cat===cat.id);
+    h += `<div class="edit-list-item"><span style="font-size:20px">${cat.emoji}</span>
+      <span class="edit-list-name">${cat.label}</span>
+      ${canDel?`<button class="edit-btn edit-btn-del" onclick="deleteCat('${cat.id}')">刪除</button>`:'<span style="font-size:10px;color:var(--muted2)">有收藏</span>'}
+      </div>`;
+  });
+  h += `<div style="margin-top:12px"><div class="modal-btn modal-btn-ok" onclick="closeModal();openAddCat()">＋ 新增分類</div></div>
+    <div style="margin-top:8px"><div class="modal-btn modal-btn-cancel" onclick="closeModal()">完成</div></div>`;
+  openModal(h);
+};
+
+window.openAddCat = function() {
+  pickEmoji='⭐';
+  const catEmojis=['🍜','🍕','🍣','🧋','☕','🏖','🏞','🎬','🎵','🎮','🎨','🛍','👗','👟','📍','⭐','🎁','🏛','🌸','📚'];
+  openModal(`<div class="modal-title">新增分類</div>
+    <div class="emoji-grid" id="epick">${catEmojis.map(e=>`<span class="emoji-opt${e===pickEmoji?' sel':''}" onclick="pickE('${e}')">${e}</span>`).join('')}</div>
+    <input class="modal-input" id="mName" placeholder="分類名稱（例：好住）"/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doAddCat()">新增</div>
+    </div>`);
+};
+
+window.doAddCat = async function() {
+  const name = document.getElementById('mName').value.trim(); if(!name) return;
+  CATS.push({id:'cat_'+Date.now(),label:name,emoji:pickEmoji,cls:'tag-eat'});
+  await saveUserData(); closeModal(); render();
+};
+
+window.deleteCat = async function(id) {
+  if(!confirm('確定刪除此分類？')) return;
+  CATS = CATS.filter(c=>c.id!==id);
+  await saveUserData(); closeModal(); render();
+};
+
+window.openEditShopCats = function() {
+  let h = '<div class="modal-title">管理網購分類</div>';
+  shopCats.forEach(cat=>{
+    const canDel = !shopItems.some(i=>i.shopCat===cat.id);
+    h += `<div class="edit-list-item"><span style="font-size:20px">${cat.emoji}</span>
+      <span class="edit-list-name">${cat.label}</span>
+      ${canDel?`<button class="edit-btn edit-btn-del" onclick="deleteShopCat('${cat.id}')">刪除</button>`:'<span style="font-size:10px;color:var(--muted2)">有收藏</span>'}
+      </div>`;
+  });
+  h += `<div style="margin-top:12px"><div class="modal-btn modal-btn-ok" onclick="closeModal();openAddShopCat()">＋ 新增分類</div></div>
+    <div style="margin-top:8px"><div class="modal-btn modal-btn-cancel" onclick="closeModal()">完成</div></div>`;
+  openModal(h);
+};
+
+window.openAddShopCat = function() {
+  pickEmoji='📦';
+  const catEmojis=['👗','👟','💄','💍','👜','🧢','⌚','📱','💻','🎮','🍜','🍕','🧴','🏠','📚','⭐','🎁','🛒','📦','🔧'];
+  openModal(`<div class="modal-title">新增網購分類</div>
+    <div class="emoji-grid" id="epick">${catEmojis.map(e=>`<span class="emoji-opt${e===pickEmoji?' sel':''}" onclick="pickE('${e}')">${e}</span>`).join('')}</div>
+    <input class="modal-input" id="mName" placeholder="分類名稱（例：保養品）"/>
+    <div class="modal-btns">
+      <div class="modal-btn modal-btn-cancel" onclick="closeModal()">取消</div>
+      <div class="modal-btn modal-btn-ok" onclick="doAddShopCat()">新增</div>
+    </div>`);
+};
+
+window.doAddShopCat = async function() {
+  const name = document.getElementById('mName').value.trim(); if(!name) return;
+  shopCats.push({id:'sc_'+Date.now(),label:name,emoji:pickEmoji});
+  await saveUserData(); closeModal(); render();
+};
+
+window.deleteShopCat = async function(id) {
+  if(!confirm('確定刪除此分類？')) return;
+  shopCats = shopCats.filter(c=>c.id!==id);
+  await saveUserData(); closeModal(); render();
+};
+
+// ===== SWIPER =====
+function initSwipers() {
+  document.querySelectorAll('.photo-swiper').forEach(sw=>{
+    const track = sw.querySelector('.photo-swiper-track'); if(!track) return;
+    const count = parseInt(sw.dataset.count)||0;
+    let idx=0, startX=0;
+    function goTo(i) {
+      if(i<0)i=0; if(i>=count)i=count-1;
+      idx=i; sw.dataset.idx=i;
+      track.style.transform=`translateX(-${i}00%)`;
+      sw.querySelectorAll('.photo-dot').forEach((d,di)=>d.classList.toggle('on',di===i));
+      const badge=sw.querySelector('.photo-count'); if(badge) badge.textContent=`${i+1} / ${count}`;
+    }
+    sw.addEventListener('touchstart',e=>{startX=e.touches[0].clientX;},{passive:true});
+    sw.addEventListener('touchend',e=>{
+      const diff=startX-e.changedTouches[0].clientX;
+      if(Math.abs(diff)>40){if(diff>0)goTo(idx+1);else goTo(idx-1);}
+    },{passive:true});
+  });
+}
+
+function esc(s){return String(s||'').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// Show loading initially
+document.getElementById('pageContent').innerHTML = '<div class="loading">載入中...</div>';
+</script>
+</body>
+</html>
